@@ -1,28 +1,27 @@
-
 # Memory Map Architect Pro
 
-A dedicated tool for low-level software engineers and embedded systems developers to plan, visualize, and document memory space allocation.
+内存空间分配架构工具。专为底层开发人员、嵌入式系统工程师设计的内存地址空间规划、可视化与文档生成工具。
 
-## Features
+## 核心功能
 
-- **High-Precision Address Calculation**: Uses `BigInt` to handle 32-bit and 64-bit address spaces without floating-point errors.
-- **Bi-Directional Derivation**: Automatically calculates the third value when you provide any two of: Start Address, End Address, or Size.
-- **Human-Readable Sizes**: Supports input and output in standard formats like `4KB`, `2.5MB`, `1GB`, etc.
-- **Real-Time Visualization**: A vertical physical layout preview that highlights unmapped gaps and overlapping regions.
-- **Sequential Hinting**: Automatically suggests the next available address based on the end of the previous block, facilitating rapid sequential entry.
-- **Markdown Export**: Generate professional documentation tables for implementation files or hardware specs.
+- **高精度地址计算**: 采用 `BigInt` 处理 32 位及 64 位地址空间，规避浮点数精度问题。
+- **自动推导逻辑**: 只需输入“起始地址、结束地址、大小”中的任意两项，系统将自动推算第三项。
+- **人性化尺寸输入**: 支持 `4KB`, `512MB`, `2GB` 等标准易读的单位输入。
+- **实时物理布局预览**: 提供垂直物理视图，直观展示未分配间隙（Gap）以及重叠区域（Overlap）。
+- **智能下一行暗示**: 提交当前内存块后，系统会自动建议下一块的起始地址（当前结束地址 + 1），极大提升连续录入效率。
+- **Markdown 导出**: 一键生成符合工程文档规范的表格，可直接粘贴至 README 或硬件手册。
 
-## Tech Stack
+## 技术栈
 
-- **React 19**: Modern UI component management.
-- **Tailwind CSS**: Clean, dark-mode professional aesthetic.
-- **TypeScript**: Type-safe address manipulation.
-- **Vite**: Ultra-fast build and development environment.
+- **React 19**: 现代化的 UI 组件管理。
+- **Tailwind CSS**: 简洁专业的暗色调设计。
+- **TypeScript**: 确保地址运算的类型安全。
+- **Vite**: 极速的构建与开发环境。
 
-## Usage
+## 使用说明
 
-1. Enter a **Block Name** (e.g., `SRAM_L1`) and select its **Type**.
-2. Provide two address parameters (e.g., **Start Address** and **Size**).
-3. The system will automatically derive the **End Address**.
-4. Click **Commit** to save to the table and visualize the physical layout.
-5. Use the **Export Table** button to copy a Markdown version for your documentation.
+1. 输入 **区域名称** (如: `SRAM_BOOT`) 并选择 **类型**。
+2. 输入任意两个地址参数（如：**起始地址** 和 **大小**）。
+3. 系统会自动计算并填入 **结束地址**。
+4. 点击 **Commit** 将其保存至列表并更新可视化视图。
+5. 使用 **Export Table** 按钮复制 Markdown 表格。

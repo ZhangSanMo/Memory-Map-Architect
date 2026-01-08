@@ -1,5 +1,5 @@
 {
   "name": "Memory Map Architect Pro",
-  "description": "A high-performance tool for low-level developers to design, visualize, and document memory address space allocations with automatic calculations and AI-assisted descriptions.",
+  "description": "A high-performance tool for low-level developers to design, visualize, and document memory address space allocations with automatic calculations.",
   "requestFramePermissions": []
 }
