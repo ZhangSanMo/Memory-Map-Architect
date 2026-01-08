@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { MemoryBlock } from './types';
-import { toHex, parseHex, parseHumanSize, formatSize } from './utils/memory-utils';
+import { toHex, parseHex, parseHumanSize, formatSize, parseMarkdownTable } from './utils/memory-utils';
 import MemoryVisualizer from './components/MemoryVisualizer';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -55,6 +55,9 @@ const App: React.FC = () => {
   const [blocks, setBlocks] = useState<MemoryBlock[]>([]);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
 
   const [newName, setNewName] = useState('');
   const [newStart, setNewStart] = useState('');
@@ -177,6 +180,51 @@ const App: React.FC = () => {
     });
   };
 
+  const handleImport = () => {
+    setImportError(null);
+    try {
+      const importedBlocks = parseMarkdownTable(importText);
+      if (importedBlocks.length === 0) {
+        setImportError('No valid memory blocks found in the input. Please check the format.');
+        return;
+      }
+      setBlocks(prev => {
+        const combined = [...prev, ...importedBlocks];
+        // Remove duplicates by name and start address
+        const unique = combined.reduce((acc, block) => {
+          const exists = acc.find(b =>
+            b.name === block.name && b.startAddress === block.startAddress
+          );
+          if (!exists) {
+            acc.push(block);
+          }
+          return acc;
+        }, [] as MemoryBlock[]);
+        return unique.sort((a, b) => (a.startAddress < b.startAddress ? -1 : 1));
+      });
+      setImportText('');
+      setShowImportModal(false);
+    } catch (err) {
+      setImportError('Failed to parse the input. Please check the format and try again.');
+    }
+  };
+
+  const handleImportReplace = () => {
+    setImportError(null);
+    try {
+      const importedBlocks = parseMarkdownTable(importText);
+      if (importedBlocks.length === 0) {
+        setImportError('No valid memory blocks found in the input. Please check the format.');
+        return;
+      }
+      setBlocks(importedBlocks);
+      setImportText('');
+      setShowImportModal(false);
+    } catch (err) {
+      setImportError('Failed to parse the input. Please check the format and try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col selection:bg-cyan-500/30 dark:bg-slate-950 bg-slate-50">
       <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-8 py-4 sticky top-0 z-50 flex justify-between items-center backdrop-blur-md bg-opacity-80">
@@ -199,16 +247,98 @@ const App: React.FC = () => {
            )}
            <ThemeToggle />
            <button
+            onClick={() => setShowImportModal(true)}
+            className="px-6 py-2 text-sm font-bold rounded-full transition-all border flex items-center gap-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import
+          </button>
+           <button
             onClick={copyAsMarkdown}
             disabled={blocks.length === 0}
             className={`px-6 py-2 text-sm font-bold rounded-full transition-all border flex items-center gap-2 ${
               copyStatus === 'copied' ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 disabled:opacity-30'
             }`}
           >
-            {copyStatus === 'copied' ? 'Copied' : 'Export Table'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {copyStatus === 'copied' ? 'Copied' : 'Export'}
           </button>
         </div>
       </header>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setShowImportModal(false)}>
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Import Memory Map</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                Paste a Markdown table exported from Memory Map Architect. The table should have columns: Region, Start Address, End Address, Size, Type, Description.
+              </p>
+            </div>
+            
+            <div className="p-6 flex-1 overflow-hidden flex flex-col gap-4">
+              <textarea
+                value={importText}
+                onChange={(e) => {
+                  setImportText(e.target.value);
+                  setImportError(null);
+                }}
+                placeholder={`| Region | Start Address | End Address | Size | Type | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| FLASH_BOOT | 0x00000000 | 0x000003FF | 1 KB | FLASH | Boot region |`}
+                className="w-full h-64 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-3 text-sm font-mono focus:border-cyan-500 outline-none transition-all text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 resize-none"
+              />
+              
+              {importError && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-600 dark:text-red-400">
+                  {importError}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImportReplace}
+                disabled={!importText.trim()}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Replace All
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={!importText.trim()}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Merge Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 overflow-hidden max-w-[1600px] mx-auto w-full">
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-6 overflow-hidden">

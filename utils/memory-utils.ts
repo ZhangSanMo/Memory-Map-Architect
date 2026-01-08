@@ -1,4 +1,6 @@
 
+import { MemoryBlock } from '../types';
+
 /**
  * Memory Utilities for high-precision address calculations.
  */
@@ -67,4 +69,64 @@ export const checkOverlap = (b1: {start: bigint, size: bigint}, b2: {start: bigi
   const end1 = b1.start + b1.size;
   const end2 = b2.start + b2.size;
   return b1.start < end2 && b2.start < end1;
+};
+
+/**
+ * Parse a Markdown table exported by copyAsMarkdown function.
+ * Expected format:
+ * | Region | Start Address | End Address | Size | Type | Description |
+ * | :--- | :--- | :--- | :--- | :--- | :--- |
+ * | FLASH_BOOT | 0x00000000 | 0x000003FF | 1 KB | FLASH | Boot region |
+ */
+export const parseMarkdownTable = (markdown: string): MemoryBlock[] => {
+  const lines = markdown.trim().split('\n');
+  const blocks: MemoryBlock[] = [];
+  
+  // Skip header and separator lines (first two lines)
+  const dataLines = lines.filter((line, index) => {
+    // Skip empty lines
+    if (!line.trim()) return false;
+    // Skip header line (contains "Region" or "Start Address")
+    if (line.includes('Region') && line.includes('Start Address')) return false;
+    // Skip separator line (contains only |, :, -, and spaces)
+    if (/^[\s|:\-]+$/.test(line)) return false;
+    return true;
+  });
+  
+  const validTypes: MemoryBlock['type'][] = ['Reserved', 'SRAM', 'FLASH', 'Peripheral', 'Stack', 'Heap', 'MMIO'];
+  
+  for (const line of dataLines) {
+    // Split by | and filter empty cells
+    const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+    
+    if (cells.length >= 5) {
+      const [name, startAddr, endAddr, size, type, ...descParts] = cells;
+      const description = descParts.join(' | ').trim() || `${name} region`;
+      
+      // Validate type
+      const blockType = validTypes.includes(type as MemoryBlock['type'])
+        ? (type as MemoryBlock['type'])
+        : 'SRAM';
+      
+      const startAddress = parseHex(startAddr);
+      const endAddress = parseHex(endAddr);
+      
+      // Calculate size from start and end addresses
+      const calculatedSize = endAddress >= startAddress
+        ? endAddress - startAddress + 1n
+        : parseHumanSize(size);
+      
+      blocks.push({
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        startAddress,
+        size: calculatedSize,
+        type: blockType,
+        description: description.trim()
+      });
+    }
+  }
+  
+  // Sort by start address
+  return blocks.sort((a, b) => (a.startAddress < b.startAddress ? -1 : 1));
 };
