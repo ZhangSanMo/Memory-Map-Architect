@@ -1,0 +1,12 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "memory-map-architect"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-01-08"
+
+# 如果你将来需要添加环境变量，可以在这里配置
+# [vars]
+# API_URL = "https://api.example.com"
+
+# 针对开发环境的配置（可选）
+# [dev]
+# port = 5173
