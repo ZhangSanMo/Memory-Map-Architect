@@ -8,5 +8,8 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'esnext'
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 });
