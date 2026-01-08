@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { MemoryBlock } from './types';
 import { toHex, parseHex, parseHumanSize, formatSize } from './utils/memory-utils';
 import MemoryVisualizer from './components/MemoryVisualizer';
-import { GeminiService } from './services/geminiService';
 
 interface InputFieldProps {
   label: string;
@@ -65,7 +64,6 @@ const App: React.FC = () => {
   const [newDesc, setNewDesc] = useState('');
 
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const aiService = useMemo(() => new GeminiService(), []);
 
   // Logic: 2-out-of-3 handling
   const activeFields = useMemo(() => {

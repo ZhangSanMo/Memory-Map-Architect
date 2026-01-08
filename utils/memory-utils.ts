@@ -1,8 +1,6 @@
 
 export const toHex = (value: bigint, prefix: boolean = true): string => {
   const hex = value.toString(16).toUpperCase().padStart(8, '0');
-  // Add underscores for readability every 4 chars for large numbers
-  const formatted = hex.replace(/\B(?=(\x{4})+(?!\x))/g, "_");
   return prefix ? `0x${hex}` : hex;
 };
 

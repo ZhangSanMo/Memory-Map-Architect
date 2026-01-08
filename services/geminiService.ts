@@ -5,7 +5,8 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY || '';
+    this.ai = new GoogleGenAI({ apiKey });
   }
 
   async suggestDescriptions(blockName: string, type: string) {
